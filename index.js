@@ -23,7 +23,7 @@ if (!slackWebhookUrl) {
     }
 
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: "new",
     });
     const [page] = await browser.pages();
     await page.setCacheEnabled(false);
