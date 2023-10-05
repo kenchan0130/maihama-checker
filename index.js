@@ -14,29 +14,23 @@ if (!slackWebhookUrl) {
 }
 
 (async () => {
-  const browser = await puppeteer.launch({
-    headless: true,
-  });
-  const [page] = await browser.pages();
-  // await page.setCacheEnabled(false);
-  await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36');
-
   let counter = 1;
   let counterMs = 0;
-  console.log(`Loading ${url}...`);
+  console.log(`Loading ${url} ...`);
   while (true) {
     if (counterMs > loopLimitMs) {
       break
     }
 
+    const browser = await puppeteer.launch({
+      headless: true,
+    });
+    const [page] = await browser.pages();
+    await page.setCacheEnabled(false);
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36');
+
     console.log(`${counter} times....`);
-    if (counter == 1) {
-      await page.goto(url, {
-        timeout: 0,
-        waitUntil: 'load',
-      });
-    }
-    await page.reload({
+    await page.goto(url, {
       timeout: 0,
       waitUntil: 'load',
     });
@@ -48,6 +42,7 @@ if (!slackWebhookUrl) {
     const hasGotReservationDom = dom.window.document.querySelectorAll(".hasGotReservation");
     if (hasGotReservationDom.length == 0) {
       console.log("No found seats");
+      await browser.close();
       await sleep(loopWaitMs);
       counterMs += loopWaitMs
       counter++
@@ -63,10 +58,10 @@ if (!slackWebhookUrl) {
       }),
     )
 
+    await browser.close();
     await sleep(loopWaitMs);
     counterMs += loopWaitMs
     counter++
   }
 
-  await browser.close();
 })();
