@@ -23,12 +23,13 @@ if (!slackWebhookUrl) {
 
   let counter = 1;
   let counterMs = 0;
+  console.log(`Loading ${url}...`);
   while (true) {
     if (counterMs > loopLimitMs) {
       break
     }
 
-    console.log(`Loading ${url}... ${counter} times`);
+    console.log(`${counter} times....`);
     if (counter == 1) {
       await page.goto(url, {
         timeout: 0,
