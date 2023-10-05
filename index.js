@@ -29,7 +29,13 @@ if (!slackWebhookUrl) {
     }
 
     console.log(`Loading ${url}... ${counter} times`);
-    await page.goto(url, {
+    if (counter == 1) {
+      await page.goto(url, {
+        timeout: 0,
+        waitUntil: 'load',
+      });
+    }
+    await page.reload({
       timeout: 0,
       waitUntil: 'load',
     });
@@ -43,6 +49,7 @@ if (!slackWebhookUrl) {
       console.log("No found seats");
       await sleep(loopWaitMs);
       counterMs += loopWaitMs
+      counter++
       continue
     }
 
@@ -57,6 +64,7 @@ if (!slackWebhookUrl) {
 
     await sleep(loopWaitMs);
     counterMs += loopWaitMs
+    counter++
   }
 
   await browser.close();
