@@ -16,6 +16,7 @@ if (!slackWebhookUrl) {
 (async () => {
   let counter = 1;
   let counterMs = 0;
+
   console.log(`Loading ${url} ...`);
   while (true) {
     if (counterMs > loopLimitMs) {
@@ -54,7 +55,7 @@ if (!slackWebhookUrl) {
     await axios.post(
       slackWebhookUrl,
       JSON.stringify({
-        "text": `*空席が見つかりました*\n${results.map((v) => `- ${v}`).join("\n")}`
+        "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`
       }),
     )
 
