@@ -8,7 +8,7 @@ const loopWaitMs = 5000; // 5秒
 const loopLimitMs = 1000 * 60 * 30; // 30分
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
-const url = `https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20231010&mealDivInform=&adultNum=4&childNum=2&childAgeInform=01%7C02%7C&restaurantTypeInform=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&beforeUrl=https%3A%2F%2Freserve.tokyodisneyresort.jp%2Fsp%2Frestaurant%2Flist%2F%3FuseDate%3D20231030%26mealDivInform%3D%26adultNum%3D4%26childNum%3D2%26childAgeInform%3D01%257C02%257C%26restaurantTypeInform%3D4%257C1%26restaurantNameCd%3D%26wheelchairCount%3D0%26stretcherCount%3D0%26showWay%3D%26reservationStatus%3D1%26wayBack%3D&wayBack=`;
+const url = `https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20231217&mealDivInform=&adultNum=2&childNum=1&childAgeInform=02%7C&restaurantTypeInform=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack=`;
 
 if (!slackWebhookUrl) {
   throw "Please set SLACK_WEBHOOK_URL"
@@ -21,15 +21,15 @@ if (!slackWebhookUrl) {
 
   console.log(`Loading ${url} ...`);
   while (true) {
-    counter++
     const lap = performance.now();
     if ((lap - start) > loopLimitMs) {
       break
     }
 
-    if (counter > 1) {
+    if (counter > 0) {
       await sleep(loopWaitMs);
     }
+    counter++
 
     const browser = await puppeteer.launch({
       headless: "new",
@@ -43,6 +43,12 @@ if (!slackWebhookUrl) {
       timeout: 0,
       waitUntil: 'load',
     });
+
+    // wait to process queue page
+    while (page.url() !== url) {
+      console.log(`Current URL is ${page.url()}`)
+      await sleep(5000);
+    }
 
     const source = await page.content({
       waitUntil: 'domcontentloaded',
