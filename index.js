@@ -8,7 +8,7 @@ const loopWaitMs = 5000; // 5秒
 const loopLimitMs = 1000 * 60 * 30; // 30分
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
-const url = `https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20231217&mealDivInform=&adultNum=2&childNum=1&childAgeInform=02%7C&restaurantTypeInform=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack=`;
+const url = `https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20240118&mealDivInform=&adultNum=2&childNum=1&childAgeInform=02%7C&restaurantTypeInform=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack=`;
 
 if (!slackWebhookUrl) {
   throw "Please set SLACK_WEBHOOK_URL"
