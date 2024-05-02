@@ -26,6 +26,7 @@ if (!url) {
   while (true) {
     const lap = performance.now();
     if ((lap - start) > loopLimitMs) {
+      console.log(`${loopLimitMs} ms elapsed, timeout.`)
       break
     }
 
@@ -49,7 +50,12 @@ if (!url) {
 
     // wait to process queue page
     while (page.url() !== url) {
-      console.log(`Current URL is ${page.url()}`)
+      const lap = performance.now();
+      if ((lap - start) > loopLimitMs) {
+        console.log(`${loopLimitMs} ms elapsed, timeout.`)
+        break
+      }
+      console.log(`Current URL is ${page.url()}, waiting 5000 ms`);
       await sleep(5000);
     }
 
@@ -66,11 +72,11 @@ if (!url) {
 
     const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent);
 
-    console.log("Found seats!!")
+    console.log("Found seats!!");
     await axios.post(
       slackWebhookUrl,
       JSON.stringify({
-        "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`
+        "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
       }),
     )
 
