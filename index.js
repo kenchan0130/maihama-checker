@@ -96,7 +96,7 @@ puppeteer.use(StealthPlugin());
     const dom = new JSDOM(source);
     const hasGotReservationDom = dom.window.document.querySelectorAll(".hasGotReservation");
     if (hasGotReservationDom.length === 0) {
-      console.log("No found seats");
+      console.log(`No found seats via ${counter} times`);
       continue
     }
 
