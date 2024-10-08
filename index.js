@@ -58,10 +58,14 @@ puppeteer.use(StealthPlugin());
     while (page.url() !== url) {
       const lap = performance.now();
       if ((lap - start) > loopLimitMs) {
-        console.log(`${loopLimitMs} ms elapsed, timeout.`)
         break
       }
-      await page.waitForSelector('#MainPart_lbWhichIsIn');
+
+      try {
+        await page.waitForSelector('#MainPart_lbWhichIsIn');
+      } catch(e) {
+        continue
+      }
       const source = await page.content();
       const dom = new JSDOM(source);
       console.log({
@@ -72,6 +76,10 @@ puppeteer.use(StealthPlugin());
       });
       console.log(`queue page waiting ${loopWaitMs} ms...`);
       await sleep(loopWaitMs);
+    }
+
+    if (page.url() !== url) {
+      continue
     }
 
     const cookies = await page.cookies();
