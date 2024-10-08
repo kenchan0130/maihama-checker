@@ -33,13 +33,14 @@ puppeteer.use(StealthPlugin());
 
   while (true) {
     const lap = performance.now();
-    if ((lap - start) > loopLimitMs) {
+    const loopTime = lap - start
+    if (loopTime > loopLimitMs) {
       console.log(`${loopLimitMs} ms elapsed, timeout.`)
       break
     }
 
     if (counter > 0) {
-      console.log(`waiting ${loopWaitMs} ms...`);
+      console.log(`waiting ${loopWaitMs} ms, loop ${loopTime} ms...`);
       await sleep(loopWaitMs);
     }
     counter++
