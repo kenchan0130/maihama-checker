@@ -31,7 +31,6 @@ puppeteer.use(StealthPlugin());
   const [page] = await browser.pages();
   await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
 
-  console.log(`Loading ${url} ...`);
   while (true) {
     const lap = performance.now();
     if ((lap - start) > loopLimitMs) {
@@ -41,10 +40,17 @@ puppeteer.use(StealthPlugin());
 
     if (counter > 0) {
       await sleep(loopWaitMs);
+      await page.reload({
+        timeout: 0,
+        waitUntil: 'load',
+      });
     }
     counter++
 
-    console.log(`${counter} times....`);
+    console.log({
+      loading: url,
+      times: counter,
+    });
     await page.goto(url, {
       timeout: 0,
       waitUntil: 'load',
@@ -76,7 +82,6 @@ puppeteer.use(StealthPlugin());
     const hasGotReservationDom = dom.window.document.querySelectorAll(".hasGotReservation");
     if (hasGotReservationDom.length === 0) {
       console.log("No found seats");
-      await browser.close();
       continue
     }
 
@@ -102,20 +107,22 @@ puppeteer.use(StealthPlugin());
     });
 
     // post session info
-    await axios.post(
-      slackWebhookUrl,
-      JSON.stringify({
-        "text":`\`\`\`
-        ${JSON.stringify(editThisCookieFormartCookies, null, 2)}
-        \`\`\``,
-      }),
-    )
-    await axios.post(
-      slackWebhookUrl,
-      JSON.stringify({
-        "text": `https://reserve.tokyodisneyresort.jp/sp\n\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
-      }),
-    )
+    await Promise.all([
+      axios.post(
+        slackWebhookUrl,
+        JSON.stringify({
+          "text":`\`\`\`
+          ${JSON.stringify(editThisCookieFormartCookies, null, 2)}
+          \`\`\``,
+        }),
+      ),
+      axios.post(
+        slackWebhookUrl,
+        JSON.stringify({
+          "text": `https://reserve.tokyodisneyresort.jp/sp\n\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
+        }),
+      ),
+    ]);
   }
 
   await browser.close();
