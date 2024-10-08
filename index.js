@@ -4,8 +4,8 @@ import { JSDOM } from 'jsdom';
 import { performance } from 'perf_hooks';
 
 const sleep = ms => new Promise(res => setTimeout(res, ms))
-const loopWaitMs = 5000; // 5秒
-const loopLimitMs = 1000 * 60 * 30; // 30分
+const loopWaitMs = 5000; // 5 sec
+const loopLimitMs = 1000 * 60 * 30; // 30 min
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 const url = process.env.TARGET_URL;
@@ -40,7 +40,7 @@ if (!url) {
     });
     const [page] = await browser.pages();
     await page.setCacheEnabled(false);
-    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36');
+    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
 
     console.log(`${counter} times....`);
     await page.goto(url, {
@@ -55,7 +55,15 @@ if (!url) {
         console.log(`${loopLimitMs} ms elapsed, timeout.`)
         break
       }
-      console.log(`Current URL is ${page.url()}, waiting 5000 ms`);
+      const source = await page.content();
+      const dom = new JSDOM(source);
+      console.log({
+        currentUrl: page.url(),
+        waitTime: dom.window.document.querySelector("#MainPart_lbWhichIsIn").innerText,
+        accessTime: dom.window.document.querySelector("#MainPart_lbExpectedServiceTime").innerText,
+        updateTime: dom.window.document.querySelector("#MainPart_lbLastUpdateTimeText").innerText,
+      });
+      console.log(`waiting 5000 ms...`);
       await sleep(5000);
     }
 
@@ -73,10 +81,34 @@ if (!url) {
     const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent);
 
     console.log("Found seats!!");
+    const cookies = await page.cookies();
+    const reserveSiteCookies = cookies.filter(v => v.name.match(/^JSESSIONID$/) || v.name.match(/^QueueITAccepted/));
+    const editThisCookieFormartCookies = reserveSiteCookies.map((v, index) => {
+      return {
+        domain: v.domain,
+        hostOnly: v.hostOnly,
+        httpOnly: v.httpOnly,
+        name: v.name,
+        path: v.path,
+        sameSite: v.sameSite,
+        secure: v.secure,
+        session: v.session,
+        storeId: "0",
+        value: v.value,
+        id: index,
+      };
+    });
+
+    const sessionInfo = `セッション情報
+https://reserve.tokyodisneyresort.jp/sp
+\`\`\`
+${JSON.stringify(editThisCookieFormartCookies, null, 2)}
+\`\`\`
+`
     await axios.post(
       slackWebhookUrl,
       JSON.stringify({
-        "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
+        "text": `${sessionInfo}\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
       }),
     )
 
