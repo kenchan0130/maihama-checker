@@ -91,12 +91,11 @@ puppeteer.use(StealthPlugin());
         httpOnly: v.httpOnly,
         name: v.name,
         path: v.path,
-        sameSite: v.sameSite ?? 'unspecified',
+        sameSite: v.sameSite === 'None' ? 'no_restriction' :  v.sameSite ?? 'unspecified',
         secure: v.secure,
         session: v.session,
         storeId: "0",
         value: v.value,
-        id: index + 1,
       };
     });
     console.log(JSON.stringify(editThisCookieFormartCookies, null, 2));
