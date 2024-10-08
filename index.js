@@ -99,16 +99,19 @@ if (!url) {
       };
     });
 
-    const sessionInfo = `セッション情報
-https://reserve.tokyodisneyresort.jp/sp
-\`\`\`
-${JSON.stringify(editThisCookieFormartCookies, null, 2)}
-\`\`\`
-`
+    // post session info
     await axios.post(
       slackWebhookUrl,
       JSON.stringify({
-        "text": `${sessionInfo}\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
+        "text":`\`\`\`
+        ${JSON.stringify(editThisCookieFormartCookies, null, 2)}
+        \`\`\``,
+      }),
+    )
+    await axios.post(
+      slackWebhookUrl,
+      JSON.stringify({
+        "text": `https://reserve.tokyodisneyresort.jp/sp\n\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
       }),
     )
 
