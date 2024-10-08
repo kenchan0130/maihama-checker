@@ -18,12 +18,18 @@ if (!url) {
   throw "Please set TARGET_URL";
 }
 
-
 puppeteer.use(StealthPlugin());
 
 (async () => {
   let counter = 0;
   const start = performance.now();
+
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: ['--no-sandbox'],
+  });
+  const [page] = await browser.pages();
+  await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
 
   console.log(`Loading ${url} ...`);
   while (true) {
@@ -37,14 +43,6 @@ puppeteer.use(StealthPlugin());
       await sleep(loopWaitMs);
     }
     counter++
-
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ['--no-sandbox'],
-    });
-    const [page] = await browser.pages();
-    await page.setCacheEnabled(false);
-    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
 
     console.log(`${counter} times....`);
     await page.goto(url, {
@@ -118,8 +116,7 @@ puppeteer.use(StealthPlugin());
         "text": `https://reserve.tokyodisneyresort.jp/sp\n\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
       }),
     )
-
-    await browser.close();
   }
 
+  await browser.close();
 })();
