@@ -40,10 +40,6 @@ puppeteer.use(StealthPlugin());
 
     if (counter > 0) {
       await sleep(loopWaitMs);
-      await page.reload({
-        timeout: 0,
-        waitUntil: 'load',
-      });
     }
     counter++
 
