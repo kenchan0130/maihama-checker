@@ -39,6 +39,7 @@ puppeteer.use(StealthPlugin());
     }
 
     if (counter > 0) {
+      console.log(`waiting ${loopWaitMs} ms...`);
       await sleep(loopWaitMs);
     }
     counter++
@@ -67,8 +68,8 @@ puppeteer.use(StealthPlugin());
         accessTime: dom.window.document.querySelector("#MainPart_lbExpectedServiceTime").textContent,
         updateTime: dom.window.document.querySelector("#MainPart_lbLastUpdateTimeText").textContent,
       });
-      console.log(`waiting 5000 ms...`);
-      await sleep(5000);
+      console.log(`waiting ${loopWaitMs} ms...`);
+      await sleep(loopWaitMs);
     }
 
     const cookies = await page.cookies();
