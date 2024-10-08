@@ -61,9 +61,7 @@ puppeteer.use(StealthPlugin());
         console.log(`${loopLimitMs} ms elapsed, timeout.`)
         break
       }
-      await page.waitForNavigation({
-        waitUntil: ['load'],
-      });
+      await page.waitForSelector('#MainPart_lbWhichIsIn');
       const source = await page.content();
       const dom = new JSDOM(source);
       console.log({
@@ -76,9 +74,6 @@ puppeteer.use(StealthPlugin());
       await sleep(loopWaitMs);
     }
 
-    await page.waitForNavigation({
-      waitUntil: ['load'],
-    });
     const cookies = await page.cookies();
     const reserveSiteCookies = cookies.filter(v => v.name.match(/^JSESSIONID$/) || v.name.match(/^QueueITAccepted/));
     const editThisCookieFormartCookies = reserveSiteCookies.map((v, index) => {
@@ -98,9 +93,7 @@ puppeteer.use(StealthPlugin());
     });
     console.log(JSON.stringify(editThisCookieFormartCookies, null, 2));
 
-    const source = await page.content({
-      waitUntil: 'domcontentloaded',
-    });
+    const source = await page.content();
     const dom = new JSDOM(source);
     const hasGotReservationDom = dom.window.document.querySelectorAll(".hasGotReservation");
     if (hasGotReservationDom.length === 0) {
