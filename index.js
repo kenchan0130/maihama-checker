@@ -84,7 +84,7 @@ puppeteer.use(StealthPlugin());
 
     const cookies = await page.cookies();
     const reserveSiteCookies = cookies.filter(v => v.name.match(/^JSESSIONID$/) || v.name.match(/^QueueITAccepted/));
-    const editThisCookieFormartCookies = reserveSiteCookies.map((v, index) => {
+    const editThisCookieFormartCookies = reserveSiteCookies.map((v) => {
       return {
         domain: v.domain,
         hostOnly: true,
@@ -98,7 +98,9 @@ puppeteer.use(StealthPlugin());
         value: v.value,
       };
     });
+    console.log('======= Cookie JSON value Start =======')
     console.log(JSON.stringify(editThisCookieFormartCookies, null, 2));
+    console.log('======= Cookie JSON value End =======')
 
     const source = await page.content();
     const dom = new JSDOM(source);
@@ -117,15 +119,16 @@ puppeteer.use(StealthPlugin());
       axios.post(
         slackWebhookUrl,
         JSON.stringify({
-          "text":`\`\`\`
-          ${JSON.stringify(editThisCookieFormartCookies, null, 2)}
-          \`\`\``,
+          "text":`Cookie JSON
+\`\`\`
+${JSON.stringify(editThisCookieFormartCookies, null, 2)}
+\`\`\``,
         }),
       ),
       axios.post(
         slackWebhookUrl,
         JSON.stringify({
-          "text": `https://reserve.tokyodisneyresort.jp/sp\n\n<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
+          "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
         }),
       ),
     ]);
