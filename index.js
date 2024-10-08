@@ -40,7 +40,7 @@ puppeteer.use(StealthPlugin());
     }
 
     if (counter > 0) {
-      console.log(`waiting ${loopWaitMs} ms, loop ${loopTime} ms...`);
+      console.log(`reserve page waiting ${loopWaitMs} ms, loop ${loopTime} ms...`);
       await sleep(loopWaitMs);
     }
     counter++
@@ -72,7 +72,7 @@ puppeteer.use(StealthPlugin());
         accessTime: dom.window.document.querySelector("#MainPart_lbExpectedServiceTime").textContent,
         updateTime: dom.window.document.querySelector("#MainPart_lbLastUpdateTimeText").textContent,
       });
-      console.log(`waiting ${loopWaitMs} ms...`);
+      console.log(`queue page waiting ${loopWaitMs} ms...`);
       await sleep(loopWaitMs);
     }
 
