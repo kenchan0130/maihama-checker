@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         url:
-          - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/search/?pageFromDiv=1&useDate=20241015&adultNum=3&childNum=3&parkDiv=5&restaurantNameCd=&childAgeInform=03%7C03%7C03%7C&wheelchairCount=0&stretcherCount=0&freeword=&showWay=&reservationStatus=1'
+          - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/search/?pageFromDiv=1&useDate=20241015&adultNum=3&childNum=3&parkDiv=4&restaurantNameCd=&childAgeInform=03%7C03%7C03%7C&wheelchairCount=0&stretcherCount=0&freeword=&showWay=&reservationStatus=1'
     steps:
       - uses: actions/checkout@v4
       - name: setup Node
