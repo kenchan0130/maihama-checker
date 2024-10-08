@@ -71,19 +71,6 @@ puppeteer.use(StealthPlugin());
       await sleep(5000);
     }
 
-    const source = await page.content({
-      waitUntil: 'domcontentloaded',
-    });
-    const dom = new JSDOM(source);
-    const hasGotReservationDom = dom.window.document.querySelectorAll(".hasGotReservation");
-    if (hasGotReservationDom.length === 0) {
-      console.log("No found seats");
-      continue
-    }
-
-    const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent);
-
-    console.log("Found seats!!");
     const cookies = await page.cookies();
     const reserveSiteCookies = cookies.filter(v => v.name.match(/^JSESSIONID$/) || v.name.match(/^QueueITAccepted/));
     const editThisCookieFormartCookies = reserveSiteCookies.map((v, index) => {
@@ -101,6 +88,21 @@ puppeteer.use(StealthPlugin());
         id: index,
       };
     });
+    console.log(editThisCookieFormartCookies);
+
+    const source = await page.content({
+      waitUntil: 'domcontentloaded',
+    });
+    const dom = new JSDOM(source);
+    const hasGotReservationDom = dom.window.document.querySelectorAll(".hasGotReservation");
+    if (hasGotReservationDom.length === 0) {
+      console.log("No found seats");
+      continue
+    }
+
+    const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent);
+
+    console.log("Found seats!!");
 
     // post session info
     await Promise.all([
