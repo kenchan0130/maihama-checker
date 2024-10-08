@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { performance } from 'perf_hooks';
@@ -17,6 +18,8 @@ if (!url) {
   throw "Please set TARGET_URL";
 }
 
+
+puppeteer.use(StealthPlugin());
 
 (async () => {
   let counter = 0;
@@ -37,6 +40,7 @@ if (!url) {
 
     const browser = await puppeteer.launch({
       headless: "new",
+      args: ['--no-sandbox'],
     });
     const [page] = await browser.pages();
     await page.setCacheEnabled(false);
@@ -59,9 +63,9 @@ if (!url) {
       const dom = new JSDOM(source);
       console.log({
         currentUrl: page.url(),
-        waitTime: dom.window.document.querySelector("#MainPart_lbWhichIsIn").innerText,
-        accessTime: dom.window.document.querySelector("#MainPart_lbExpectedServiceTime").innerText,
-        updateTime: dom.window.document.querySelector("#MainPart_lbLastUpdateTimeText").innerText,
+        waitTime: dom.window.document.querySelector("#MainPart_lbWhichIsIn").textContent,
+        accessTime: dom.window.document.querySelector("#MainPart_lbExpectedServiceTime").textContent,
+        updateTime: dom.window.document.querySelector("#MainPart_lbLastUpdateTimeText").textContent,
       });
       console.log(`waiting 5000 ms...`);
       await sleep(5000);
