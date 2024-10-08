@@ -78,19 +78,19 @@ puppeteer.use(StealthPlugin());
     const editThisCookieFormartCookies = reserveSiteCookies.map((v, index) => {
       return {
         domain: v.domain,
-        hostOnly: v.hostOnly,
+        hostOnly: true,
         httpOnly: v.httpOnly,
         name: v.name,
         path: v.path,
-        sameSite: v.sameSite,
+        sameSite: v.sameSite ?? 'unspecified',
         secure: v.secure,
         session: v.session,
         storeId: "0",
         value: v.value,
-        id: index,
+        id: index + 1,
       };
     });
-    console.log(editThisCookieFormartCookies);
+    console.log(JSON.stringify(editThisCookieFormartCookies, null, 2));
 
     const source = await page.content({
       waitUntil: 'domcontentloaded',
