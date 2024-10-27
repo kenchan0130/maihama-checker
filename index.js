@@ -10,7 +10,7 @@ const loopLimitMs = 1000 * 60 * 30; // 30 min
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 const url = process.env.TARGET_URL;
-const rejectList = (process.env.REJECT_LIST || "").split(",").filter((v) => v.length !== 0);
+const rejectList = (process.env.REJECT_LIST ?? "").split(",").filter((v) => v.length !== 0);
 
 if (!slackWebhookUrl) {
   throw "Please set SLACK_WEBHOOK_URL";
@@ -111,11 +111,9 @@ puppeteer.use(StealthPlugin());
       continue
     }
 
-    const results = Array.from(hasGotReservationDom)
-      .map((v) => v.querySelector(".name").textContent.trim())
-      .filter((v) => !rejectList.includes(v));
+    const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent.trim()).filter((v) => !rejectList.includes(v));
 
-    console.log("Found seats!!");
+    console.log({ results });
 
     // post session info
     await Promise.all([
