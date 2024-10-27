@@ -112,6 +112,10 @@ puppeteer.use(StealthPlugin());
     }
 
     const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent.trim()).filter((v) => !rejectList.includes(v));
+    if (results.length === 0) {
+      console.log(`No found seats via ${counter} times`);
+      continue
+    }
 
     console.log({ results });
 
