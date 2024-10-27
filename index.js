@@ -10,6 +10,7 @@ const loopLimitMs = 1000 * 60 * 30; // 30 min
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 const url = process.env.TARGET_URL;
+const rejectList = (process.env.REJECT_LIST || "").split(",").filter((v) => v.length !== 0);
 
 if (!slackWebhookUrl) {
   throw "Please set SLACK_WEBHOOK_URL";
@@ -84,7 +85,7 @@ puppeteer.use(StealthPlugin());
 
     const cookies = await page.cookies();
     const reserveSiteCookies = cookies.filter(v => v.name.match(/^JSESSIONID$/) || v.name.match(/^QueueITAccepted/));
-    const editThisCookieFormartCookies = reserveSiteCookies.map((v) => {
+    const editThisCookieFormatCookies = reserveSiteCookies.map((v) => {
       return {
         domain: v.domain,
         hostOnly: true,
@@ -99,7 +100,7 @@ puppeteer.use(StealthPlugin());
       };
     });
     console.log('======= Cookie JSON value Start =======')
-    console.log(JSON.stringify(editThisCookieFormartCookies, null, 2));
+    console.log(JSON.stringify(editThisCookieFormatCookies, null, 2));
     console.log('======= Cookie JSON value End =======')
 
     const source = await page.content();
@@ -110,7 +111,9 @@ puppeteer.use(StealthPlugin());
       continue
     }
 
-    const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent);
+    const results = Array.from(hasGotReservationDom)
+      .map((v) => v.querySelector(".name").textContent.trim())
+      .filter((v) => !rejectList.includes(v));
 
     console.log("Found seats!!");
 
@@ -121,7 +124,7 @@ puppeteer.use(StealthPlugin());
         JSON.stringify({
           "text":`Cookie JSON
 \`\`\`
-${JSON.stringify(editThisCookieFormartCookies, null, 2)}
+${JSON.stringify(editThisCookieFormatCookies, null, 2)}
 \`\`\``,
         }),
       ),
