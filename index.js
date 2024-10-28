@@ -111,7 +111,20 @@ puppeteer.use(StealthPlugin());
       continue
     }
 
-    const results = Array.from(hasGotReservationDom).map((v) => v.querySelector(".name").textContent.trim()).filter((v) => !rejectList.includes(v));
+    const results = Array.from(hasGotReservationDom)
+      .map((v) => {
+        const [_, nameCd, contentsCd] = v.querySelector("button").getAttribute("onclick").replaceAll("'", "").match(/\((.+)\)/)[1].split(",");
+        const checkUrl = new URL(url);
+        checkUrl.searchParams.append('nameCd', nameCd);
+        checkUrl.searchParams.append('contentsCd', contentsCd);
+        checkUrl.pathname = url.pathname.replace('list', 'check');
+
+        return {
+          name: v.querySelector(".name").textContent.trim(),
+          url: checkUrl.toString(),
+        };
+      })
+      .filter((v) => !rejectList.includes(v.name));
     if (results.length === 0) {
       console.log(`No found seats via ${counter} times`);
       continue
@@ -133,7 +146,7 @@ ${JSON.stringify(editThisCookieFormatCookies, null, 2)}
       axios.post(
         slackWebhookUrl,
         JSON.stringify({
-          "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- ${v}`).join("\n")}`,
+          "text": `<${url}|空席が見つかりました>\n${results.map((v) => `- <${v.url}|${v.name}>`).join("\n")}`,
         }),
       ),
     ]);
