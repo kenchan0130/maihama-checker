@@ -40,4 +40,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TARGET_URL: ${{ matrix.url }}
-          REJECT_LIST: "ハイピリオン・ラウンジ,シャーウッドガーデン・レストラン"
+          REJECT_LIST: "ハイピリオン・ラウンジ,シャーウッドガーデン・レストラン,イーストサイド･カフェ"
