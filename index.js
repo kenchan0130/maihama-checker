@@ -117,7 +117,7 @@ puppeteer.use(StealthPlugin());
         const checkUrl = new URL(url);
         checkUrl.searchParams.append('nameCd', nameCd);
         checkUrl.searchParams.append('contentsCd', contentsCd);
-        checkUrl.pathname = url.pathname.replace('list', 'check');
+        checkUrl.pathname = checkUrl.pathname.replace('list', 'check');
 
         return {
           name: v.querySelector(".name").textContent.trim(),
