@@ -1,7 +1,7 @@
 name: schedule
 on:
   schedule:
-    #- cron: '*/30 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,8 @@ jobs:
     strategy:
       matrix:
         url:
-          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20250213&mealDivInform=&adultNum=2&childNum=1&childAgeInform=02%7C&restaurantTypeInform=4%7C3%7C1&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&beforeUrl=&wayBack='
+          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20250514&mealDivInform=&adultNum=2&childNum=1&childAgeInform=02%7C&restaurantTypeInform=4%7C3%7C1&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&beforeUrl=&wayBack='
+          - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/search/list?useDate=20250514&adultNum=2&childNum=1&wheelchairCount=0&stretcherCount=0&freeword=&childAgeInform=03%7C&reservationStatus=1'
     steps:
       - uses: actions/checkout@v4
       - name: setup Node
@@ -40,4 +41,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TARGET_URL: ${{ matrix.url }}
-          REJECT_LIST: "ハイピリオン・ラウンジ,シャーウッドガーデン・レストラン,イーストサイド･カフェ"
+          REJECT_LIST: "ハイピリオン・ラウンジ,シャーウッドガーデン・レストラン,イーストサイド･カフェ,れすとらん北齋"
