@@ -11,8 +11,8 @@ jobs:
       fail-fast: false
       matrix:
         url:
-          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20250514&mealDivInform=&adultNum=2&childNum=1&childAgeInform=02%7C&restaurantTypeInform=4%7C3%7C1&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&beforeUrl=&wayBack='
-          - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/search/list?useDate=20250514&adultNum=2&childNum=1&wheelchairCount=0&stretcherCount=0&freeword=&childAgeInform=03%7C&reservationStatus=1'
+          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20250514&mealDivInform=&adultNum=2&childNum=1&childAgeInform=03%7C&restaurantTypeInform=4%7C3%7C1&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&wayBack='
+          - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/list/?useDate=20250514&adultNum=2&childNum=1&childAgeInform=03%7C&parkDiv=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&wayBack='
     steps:
       - uses: actions/checkout@v4
       - name: setup Node
