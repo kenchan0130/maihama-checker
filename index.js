@@ -50,10 +50,15 @@ puppeteer.use(StealthPlugin());
       loading: url,
       times: counter,
     });
-    await page.goto(url, {
-      timeout: 0,
-      waitUntil: 'load',
-    });
+    try {
+      await page.goto(url, {
+        timeout: 30000, // 30s
+        waitUntil: 'load',
+      });
+    } catch(e) {
+      console.log(`'${e.message}' error occurred, process continue...`)
+      continue
+    }
 
     // wait to process queue page
     while (page.url() !== url) {
