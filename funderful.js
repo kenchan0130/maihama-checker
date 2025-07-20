@@ -138,6 +138,16 @@ function calculateWaitTime(nextUpdateUTC) {
     const now = new Date();
     const waitTimeMs = nextUpdate.getTime() - now.getTime();
 
+    console.log(`Time calculation debug:`);
+    console.log(`  Current time (UTC): ${now.toISOString()}`);
+    console.log(`  Next update (UTC): ${nextUpdate.toISOString()}`);
+    console.log(
+      `  Calculated wait time: ${waitTimeMs}ms (${Math.ceil(
+        waitTimeMs / 1000
+      )}s)`
+    );
+
+    // 過去の時刻の場合や異常な値の場合は最小待機時間を使用
     if (waitTimeMs <= 0) {
       console.log(
         `nextUpdate is in the past or invalid, using minimum wait time`
@@ -145,9 +155,14 @@ function calculateWaitTime(nextUpdateUTC) {
       return MIN_WAIT_MS;
     }
 
+    // 最大待機時間を超える場合は制限
     if (waitTimeMs > MAX_WAIT_MS) {
       console.log(
-        `nextUpdate is too far in the future, limiting to max wait time`
+        `nextUpdate is too far in the future (${Math.ceil(
+          waitTimeMs / 1000 / 60
+        )} minutes), limiting to max wait time (${
+          MAX_WAIT_MS / 1000 / 60
+        } minutes)`
       );
       return MAX_WAIT_MS;
     }
@@ -199,9 +214,9 @@ async function runLoop() {
           result.cacheInfo.nextUpdate
         ).toLocaleString("ja-JP");
         console.log(
-          `Next update scheduled at: ${nextUpdateLocal} (${
+          `Next update scheduled at: ${nextUpdateLocal} (waiting ${Math.ceil(
             waitTimeMs / 1000
-          } seconds from now)`
+          )} seconds)`
         );
       } else {
         console.log(
@@ -216,18 +231,21 @@ async function runLoop() {
 
       if (remainingTime > waitTimeMs) {
         console.log(
-          `Waiting until next update... (${Math.ceil(
+          `⏳ Sleeping for ${Math.ceil(
+            waitTimeMs / 1000
+          )} seconds until next update... (${Math.ceil(
             remainingTime / 1000 / 60
           )} minutes remaining in total loop)`
         );
         await sleep(waitTimeMs);
       } else if (remainingTime > 0) {
         console.log(
-          `Final wait: ${Math.ceil(remainingTime / 1000)} seconds remaining`
+          `⏳ Final wait: ${Math.ceil(remainingTime / 1000)} seconds remaining`
         );
         await sleep(remainingTime);
         break;
       } else {
+        console.log(`⏰ Loop time expired, ending loop`);
         break;
       }
     } catch (error) {

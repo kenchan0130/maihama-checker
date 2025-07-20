@@ -8,16 +8,7 @@
     "funderful": "node funderful.js"
   },
   "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/kenchan0130/maihama-checker.git"
-  },
-  "author": "",
   "license": "PRIVATE",
-  "bugs": {
-    "url": "https://github.com/kenchan0130/maihama-checker/issues"
-  },
-  "homepage": "https://github.com/kenchan0130/maihama-checker#readme",
   "dependencies": {
     "axios": "^1.5.0",
     "jsdom": "^22.1.0",
