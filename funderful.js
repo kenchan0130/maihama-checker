@@ -3,6 +3,9 @@ const API_URL =
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 const month = process.env.MONTH;
 const day = process.env.DAY;
+const rejectList = (process.env.REJECT_LIST ?? "")
+  .split(",")
+  .filter((v) => v.length !== 0);
 
 const LOOP_DURATION_MS = 30 * 60 * 1000; // 30 min
 const MIN_WAIT_MS = 10 * 1000; // 最小10秒待機
@@ -40,6 +43,11 @@ async function getAvailableShows(month, day) {
     for (const showCode in dayData) {
       const show = dayData[showCode];
       const fullShowName = show.fullShowName;
+
+      if (rejectList.includes(fullShowName)) {
+        console.log(`Skipping ${fullShowName} (in reject list)`);
+        continue;
+      }
 
       const availablePerformances = show.performances.filter(
         (perf) => perf.status === "available"
@@ -161,6 +169,12 @@ async function runLoop() {
     } minutes, waiting based on cacheInfo.nextUpdate`
   );
   console.log(`Checking shows for ${month}/${day}`);
+
+  if (rejectList.length > 0) {
+    console.log(`Reject list: ${rejectList.join(", ")}`);
+  } else {
+    console.log("No shows in reject list");
+  }
 
   while (Date.now() - startTime < LOOP_DURATION_MS) {
     loopCount++;

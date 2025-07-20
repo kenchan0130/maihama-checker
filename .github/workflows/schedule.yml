@@ -75,3 +75,4 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           MONTH: 7
           DAY: 21
+          REJECT_LIST: "ビッグバンドビート～ア・スペシャルトリート～"
