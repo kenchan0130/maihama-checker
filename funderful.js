@@ -4,8 +4,9 @@ const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 const month = process.env.MONTH;
 const day = process.env.DAY;
 
-const LOOP_INTERVAL_MS = 30 * 1000; // 30 sec
 const LOOP_DURATION_MS = 30 * 60 * 1000; // 30 min
+const MIN_WAIT_MS = 10 * 1000; // 最小10秒待機
+const MAX_WAIT_MS = 15 * 60 * 1000; // 最大15分待機
 
 if (!slackWebhookUrl) {
   throw new Error("Please set SLACK_WEBHOOK_URL environment variable");
@@ -30,7 +31,7 @@ async function getAvailableShows(month, day) {
     const dayStr = day.toString();
     if (!data.masterData[dayStr]) {
       console.log(`No data found for day ${day} in month ${month}`);
-      return [];
+      return { availableShows: [], cacheInfo: data.cacheInfo };
     }
 
     const availableShows = [];
@@ -54,7 +55,7 @@ async function getAvailableShows(month, day) {
       }
     }
 
-    return availableShows;
+    return { availableShows, cacheInfo: data.cacheInfo };
   } catch (error) {
     console.error("Error fetching show data:", error.message);
     throw error;
@@ -101,7 +102,9 @@ async function checkAndNotify(month, day) {
   try {
     console.log(`Checking for available shows on ${month}/${day}...`);
 
-    const availableShows = await getAvailableShows(month, day);
+    const result = await getAvailableShows(month, day);
+    const availableShows = result.availableShows;
+    const cacheInfo = result.cacheInfo;
 
     if (availableShows.length > 0) {
       await sendSlackNotification(availableShows, month, day);
@@ -109,7 +112,7 @@ async function checkAndNotify(month, day) {
       console.log(`No available shows found for ${month}/${day}`);
     }
 
-    return availableShows;
+    return { availableShows, cacheInfo };
   } catch (error) {
     console.error(
       `Error in checkAndNotify for ${month}/${day}:`,
@@ -121,6 +124,33 @@ async function checkAndNotify(month, day) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function calculateWaitTime(nextUpdateUTC) {
+  try {
+    const nextUpdate = new Date(nextUpdateUTC);
+    const now = new Date();
+    const waitTimeMs = nextUpdate.getTime() - now.getTime();
+
+    if (waitTimeMs <= 0) {
+      console.log(
+        `nextUpdate is in the past or invalid, using minimum wait time`
+      );
+      return MIN_WAIT_MS;
+    }
+
+    if (waitTimeMs > MAX_WAIT_MS) {
+      console.log(
+        `nextUpdate is too far in the future, limiting to max wait time`
+      );
+      return MAX_WAIT_MS;
+    }
+
+    return Math.max(waitTimeMs, MIN_WAIT_MS);
+  } catch (error) {
+    console.error(`Error parsing nextUpdate: ${nextUpdateUTC}`, error.message);
+    return MIN_WAIT_MS;
+  }
+}
+
 async function runLoop() {
   const startTime = Date.now();
   let loopCount = 0;
@@ -128,7 +158,7 @@ async function runLoop() {
   console.log(
     `Starting loop for ${
       LOOP_DURATION_MS / 1000 / 60
-    } minutes, checking every ${LOOP_INTERVAL_MS / 1000} seconds`
+    } minutes, waiting based on cacheInfo.nextUpdate`
   );
   console.log(`Checking shows for ${month}/${day}`);
 
@@ -138,31 +168,68 @@ async function runLoop() {
 
     try {
       console.log(`\n--- Loop ${loopCount} at ${currentTime} ---`);
-      await checkAndNotify(month, day);
+      const result = await checkAndNotify(month, day);
+
+      let waitTimeMs = MIN_WAIT_MS;
+      if (result.cacheInfo && result.cacheInfo.nextUpdate) {
+        waitTimeMs = calculateWaitTime(result.cacheInfo.nextUpdate);
+
+        console.log(`Cache info:`, {
+          lastUpdated: result.cacheInfo.lastUpdated,
+          nextUpdate: result.cacheInfo.nextUpdate,
+          source: result.cacheInfo.source,
+          isStale: result.cacheInfo.isStale,
+        });
+
+        const nextUpdateLocal = new Date(
+          result.cacheInfo.nextUpdate
+        ).toLocaleString("ja-JP");
+        console.log(
+          `Next update scheduled at: ${nextUpdateLocal} (${
+            waitTimeMs / 1000
+          } seconds from now)`
+        );
+      } else {
+        console.log(
+          `No nextUpdate info found, using minimum wait time: ${
+            waitTimeMs / 1000
+          } seconds`
+        );
+      }
+
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = LOOP_DURATION_MS - elapsedTime;
+
+      if (remainingTime > waitTimeMs) {
+        console.log(
+          `Waiting until next update... (${Math.ceil(
+            remainingTime / 1000 / 60
+          )} minutes remaining in total loop)`
+        );
+        await sleep(waitTimeMs);
+      } else if (remainingTime > 0) {
+        console.log(
+          `Final wait: ${Math.ceil(remainingTime / 1000)} seconds remaining`
+        );
+        await sleep(remainingTime);
+        break;
+      } else {
+        break;
+      }
     } catch (error) {
       console.error(`Error in loop ${loopCount}:`, error.message);
-    }
-
-    const elapsedTime = Date.now() - startTime;
-    const remainingTime = LOOP_DURATION_MS - elapsedTime;
-
-    if (remainingTime > LOOP_INTERVAL_MS) {
       console.log(
-        `Waiting ${LOOP_INTERVAL_MS / 1000} seconds... (${Math.ceil(
-          remainingTime / 1000 / 60
-        )} minutes remaining)`
+        `Waiting minimum time before retry: ${MIN_WAIT_MS / 1000} seconds`
       );
-      await sleep(LOOP_INTERVAL_MS);
-    } else if (remainingTime > 0) {
-      console.log(
-        `Final wait: ${Math.ceil(remainingTime / 1000)} seconds remaining`
-      );
-      await sleep(remainingTime);
-      break;
-    } else {
-      break;
+      await sleep(MIN_WAIT_MS);
     }
   }
+
+  console.log(
+    `\n🏁 Loop completed after ${loopCount} iterations over ${
+      LOOP_DURATION_MS / 1000 / 60
+    } minutes`
+  );
 }
 
 (async () => {
