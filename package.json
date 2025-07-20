@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
-  "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "restaurant": "node restaurant.js",
+    "funderful": "node funderful.js"
   },
   "type": "module",
   "repository": {
