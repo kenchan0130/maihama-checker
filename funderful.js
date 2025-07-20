@@ -226,7 +226,7 @@ async function runLoop() {
   }
 
   console.log(
-    `\n🏁 Loop completed after ${loopCount} iterations over ${
+    `Loop completed after ${loopCount} iterations over ${
       LOOP_DURATION_MS / 1000 / 60
     } minutes`
   );
