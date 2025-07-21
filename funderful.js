@@ -7,7 +7,7 @@ const rejectList = (process.env.REJECT_LIST ?? "")
   .split(",")
   .filter((v) => v.length !== 0);
 
-const LOOP_DURATION_MS = 30 * 60 * 1000; // 30 min
+const LOOP_DURATION_MS = 45 * 60 * 1000; // 45 min
 const MIN_WAIT_MS = 10 * 1000; // 最小10秒待機
 const MAX_WAIT_MS = 15 * 60 * 1000; // 最大15分待機
 
