@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         url:
-          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20250721&mealDivInform=&adultNum=2&childNum=1&childAgeInform=03%7C&restaurantTypeInform=4%7C3%7C1&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&wayBack='
+          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20251001&mealDivInform=&adultNum=4&childNum=2&childAgeInform=03%7C03%7C&restaurantTypeInform=4%7C1&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&beforeUrl=&wayBack='
           # - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/list/?useDate=20250721&adultNum=2&childNum=1&childAgeInform=03%7C&parkDiv=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&wayBack='
     steps:
       - uses: actions/checkout@v4
@@ -43,36 +43,36 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TARGET_URL: ${{ matrix.url }}
           REJECT_LIST: "シャーウッドガーデン・レストラン,ハイピリオン・ラウンジ,イーストサイド･カフェ,れすとらん北齋,エンパイア・グリル,カンナ,センターストリート ･ コーヒーハウス,ドリーマーズ・ラウンジ（ワンス・アポン・ア・ドリームセット限定）"
-  funderful:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Cache node modules
-        id: npm-cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            node_modules
-            ~/.cache
-            ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-      - name: install dependencies
-        if: ${{ steps.npm-cache.outputs.cache-hit != 'true' }}
-        run: npm ci
-      - name: run script
-        run: npm run funderful
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          MONTH: 7
-          DAY: 21
-          REJECT_LIST: "ビッグバンドビート～ア・スペシャルトリート～"
+  # funderful:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+  #     - name: Cache node modules
+  #       id: npm-cache
+  #       uses: actions/cache@v3
+  #       env:
+  #         cache-name: cache-node-modules
+  #       with:
+  #         path: |
+  #           node_modules
+  #           ~/.cache
+  #           ~/.npm
+  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+  #           ${{ runner.os }}-build-${{ env.cache-name }}-
+  #           ${{ runner.os }}-build-
+  #     - name: install dependencies
+  #       if: ${{ steps.npm-cache.outputs.cache-hit != 'true' }}
+  #       run: npm ci
+  #     - name: run script
+  #       run: npm run funderful
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #         MONTH: 7
+  #         DAY: 21
+  #         REJECT_LIST: "ビッグバンドビート～ア・スペシャルトリート～"
