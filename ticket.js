@@ -1,6 +1,8 @@
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 const targetUrl = process.env.TARGET_URL;
 const referer = process.env.REFERER;
+// Slack 投稿に載せるチケットページ URL（未指定なら referer を利用）
+const linkUrl = process.env.LINK_URL ?? referer;
 // この枚数以上の残数がある場合のみ通知する（デフォルト 2 枚以上）
 const MIN_REMAINING_COUNT = Number(process.env.MIN_REMAINING_COUNT ?? 2);
 
@@ -50,7 +52,7 @@ async function sendSlackNotification(available) {
     .join("\n");
 
   const message = {
-    text: `チケットに空きが見つかりました！\n\n${lines}\n\n${referer}`,
+    text: `チケットに空きが見つかりました！\n\n${lines}\n\n<${linkUrl}|チケットページを開く>`,
   };
 
   const response = await fetch(slackWebhookUrl, {
