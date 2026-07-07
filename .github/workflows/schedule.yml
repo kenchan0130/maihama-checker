@@ -57,12 +57,12 @@ jobs:
           - content_id: 440657
             large_category_id: 17494
             date: '7/8'
-            min_remaining_count: 2
+            min_remaining_count: 3
           # ドリームス・テイク・フライト（7月の全日をチェック）
           - content_id: 438174
             large_category_id: 17416
             date: ''
-            min_remaining_count: 2
+            min_remaining_count: 3
     steps:
       - uses: actions/checkout@v5
       - name: setup Node
