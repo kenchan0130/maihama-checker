@@ -1,7 +1,7 @@
 name: schedule
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -13,8 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         url:
-          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20251001&mealDivInform=3&adultNum=4&childNum=2&childAgeInform=03%7C04%7C&restaurantTypeInform=&restaurantNameCd=RCPR0&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack='
-          - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20251001&mealDivInform=3&adultNum=2&childNum=1&childAgeInform=03%7C&restaurantTypeInform=&restaurantNameCd=RCPR0&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack='
+          - "https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20251001&mealDivInform=3&adultNum=4&childNum=2&childAgeInform=03%7C04%7C&restaurantTypeInform=&restaurantNameCd=RCPR0&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack="
+          - "https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20251001&mealDivInform=3&adultNum=2&childNum=1&childAgeInform=03%7C&restaurantTypeInform=&restaurantNameCd=RCPR0&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack="
           # - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/list/?useDate=20250721&adultNum=2&childNum=1&childAgeInform=03%7C&parkDiv=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&wayBack='
     steps:
       - uses: actions/checkout@v5
@@ -53,15 +53,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ダンス・ザ・グローブ！ 7/8
+          # dance 7/8
           - content_id: 440657
             large_category_id: 17494
-            date: '7/8'
+            date: "7/8"
             min_remaining_count: 3
-          # ドリームス・テイク・フライト（7月の全日をチェック）
+          # dreams 7/8
           - content_id: 438174
             large_category_id: 17416
-            date: ''
+            date: "7/8"
             min_remaining_count: 3
     steps:
       - uses: actions/checkout@v5
