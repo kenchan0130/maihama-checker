@@ -1,10 +1,19 @@
+const API_URL =
+  "https://zw5imfeelcfhupz6ctfpzgnqem0hxvdj.lambda-url.ap-northeast-1.on.aws/";
+// 購入ページのベース URL（{base}/module/ticket/{sourceContentId} でリンク生成）
+const EVENT_BASE =
+  process.env.EVENT_BASE ??
+  "https://fanclub-funderful.tokyodisneyresort.jp/event/16321";
+
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
-const targetUrl = process.env.TARGET_URL;
-const referer = process.env.REFERER;
-// Slack 投稿に載せるチケットページ URL（未指定なら referer を利用）
-const linkUrl = process.env.LINK_URL ?? referer;
-// この枚数以上の残数がある場合のみ通知する（デフォルト 2 枚以上）
-const MIN_REMAINING_COUNT = Number(process.env.MIN_REMAINING_COUNT ?? 2);
+const month = process.env.MONTH;
+// DAY は任意。未指定ならその月の全日をチェックする
+const day = process.env.DAY;
+// SHOW は公演コード(DTG/DTF/MMW など) か公演名の一部。カンマ区切りで複数可
+const showFilter = (process.env.SHOW ?? "")
+  .split(",")
+  .map((v) => v.trim())
+  .filter((v) => v.length !== 0);
 
 const LOOP_LIMIT_MS = 28 * 60 * 1000; // 28 min (GitHub Actions 全体は 30 min timeout)
 const WAIT_MS = 10 * 1000; // 10 秒ごとにチェック
@@ -12,21 +21,28 @@ const WAIT_MS = 10 * 1000; // 10 秒ごとにチェック
 if (!slackWebhookUrl) {
   throw new Error("Please set SLACK_WEBHOOK_URL environment variable");
 }
-if (!targetUrl) {
-  throw new Error("Please set TARGET_URL environment variable");
-}
-if (!referer) {
-  throw new Error("Please set REFERER environment variable");
+if (!month) {
+  throw new Error("Please set MONTH environment variable");
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function getAvailableTickets() {
-  const response = await fetch(targetUrl, {
+function matchesShowFilter(showCode, fullShowName) {
+  if (showFilter.length === 0) return true;
+  return showFilter.some(
+    (f) =>
+      showCode === f ||
+      showCode.toLowerCase() === f.toLowerCase() ||
+      fullShowName.includes(f)
+  );
+}
+
+async function fetchMasterData() {
+  const response = await fetch(`${API_URL}?month=${month}`, {
     headers: {
-      accept: "application/json",
-      language: "jpn",
-      referer,
+      Referer: "https://main.d17i4dgeb1exbe.amplifyapp.com/",
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
     },
   });
 
@@ -34,25 +50,54 @@ async function getAvailableTickets() {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const json = await response.json();
-  const tickets = json?.data?.tickets ?? [];
+  return response.json();
+}
 
-  return tickets
-    .filter((t) => (t.remaining_count ?? 0) >= MIN_REMAINING_COUNT)
-    .map((t) => ({
-      id: t.ticket_content?.id ?? t.ticket_content?.content_id,
-      title: t.ticket_content?.title ?? "(no title)",
-      remainingCount: t.remaining_count,
-    }));
+// 対象公演の available な performance を全て返す
+function collectAvailable(masterData) {
+  const results = [];
+  // DAY 指定があればその日だけ、無ければ全日
+  const days = day ? [day.toString()] : Object.keys(masterData ?? {});
+
+  for (const dayStr of days) {
+    const dayData = masterData?.[dayStr];
+    if (!dayData) continue;
+
+    for (const showCode of Object.keys(dayData)) {
+      const show = dayData[showCode];
+      const fullShowName = show.fullShowName ?? showCode;
+      if (!matchesShowFilter(showCode, fullShowName)) continue;
+
+      for (const perf of show.performances ?? []) {
+        if (perf.status !== "available") continue;
+        results.push({
+          key: `${dayStr}-${showCode}-${perf.round}`,
+          day: dayStr,
+          showCode,
+          fullShowName,
+          round: perf.round,
+          sourceContentId: perf.sourceContentId,
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 async function sendSlackNotification(available) {
   const lines = available
-    .map((t) => `• ${t.title}（残り ${t.remainingCount}）`)
+    .map((a) => {
+      const label = `${month}/${a.day} ${a.fullShowName} 第${a.round}回公演`;
+      const url = a.sourceContentId
+        ? `${EVENT_BASE}/module/ticket/${a.sourceContentId}`
+        : EVENT_BASE;
+      return `• <${url}|${label}>`;
+    })
     .join("\n");
 
   const message = {
-    text: `チケットに空きが見つかりました！\n\n${lines}\n\n<${linkUrl}|チケットページを開く>`,
+    text: `チケットに空きが見つかりました！\n\n${lines}`,
   };
 
   const response = await fetch(slackWebhookUrl, {
@@ -65,17 +110,20 @@ async function sendSlackNotification(available) {
     throw new Error(`Slack HTTP error! status: ${response.status}`);
   }
 
-  console.log(`Slack notification sent for ${available.length} tickets`);
+  console.log(`Slack notification sent for ${available.length} performances`);
 }
 
 async function runLoop() {
   const startTime = Date.now();
   let loopCount = 0;
-  // 同じチケットで通知を連発しないよう、通知済み ID を記録する
+  // 同じ公演で通知を連発しないよう、通知済み key を記録する
   const notified = new Set();
 
-  console.log(`Checking tickets: ${targetUrl}`);
-  console.log(`Notify when remaining_count >= ${MIN_REMAINING_COUNT}`);
+  console.log(
+    `Checking month=${month}${day ? ` day=${day}` : " (all days)"}${
+      showFilter.length ? ` show=${showFilter.join(",")}` : " (all shows)"
+    }`
+  );
 
   while (Date.now() - startTime < LOOP_LIMIT_MS) {
     loopCount++;
@@ -83,19 +131,20 @@ async function runLoop() {
     console.log(`\n--- Loop ${loopCount} at ${currentTime} ---`);
 
     try {
-      const available = await getAvailableTickets();
+      const data = await fetchMasterData();
+      const available = collectAvailable(data.masterData);
 
       if (available.length === 0) {
-        console.log("No available tickets");
-        // 在庫が無くなったチケットは再度空いたときに通知するためリセット
+        console.log("No available performances");
+        // 一旦売り切れたら、再度空いたときに通知するためリセット
         notified.clear();
       } else {
-        const fresh = available.filter((t) => !notified.has(t.id));
+        const fresh = available.filter((a) => !notified.has(a.key));
         if (fresh.length > 0) {
           await sendSlackNotification(fresh);
-          fresh.forEach((t) => notified.add(t.id));
+          fresh.forEach((a) => notified.add(a.key));
         } else {
-          console.log("Available tickets already notified, skipping");
+          console.log("Available performances already notified, skipping");
         }
       }
     } catch (error) {

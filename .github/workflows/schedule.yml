@@ -53,10 +53,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - url: 'https://fanclub-funderful.tokyodisneyresort.jp/web_api/v2/ticket/902/16321/440657?type=List&ticket_category_id=94181&ticket_category_type=Middle'
-            referer: 'https://fanclub-funderful.tokyodisneyresort.jp/event/16321/module/ticket/440657?ticketLargeCategoryId=17494'
-          - url: 'https://fanclub-funderful.tokyodisneyresort.jp/web_api/v2/ticket/902/16321/440657?type=List&ticket_category_id=94180&ticket_category_type=Middle'
-            referer: 'https://fanclub-funderful.tokyodisneyresort.jp/event/16321/module/ticket/440657?ticketLargeCategoryId=17494'
+          # ダンス・ザ・グローブ！ 7/8
+          - month: 7
+            day: 8
+            show: DTG
+          # ドリームス・テイク・フライト（7月の全日をチェック）
+          - month: 7
+            day: ''
+            show: DTF
     steps:
       - uses: actions/checkout@v5
       - name: setup Node
@@ -67,7 +71,6 @@ jobs:
         run: npm run ticket
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          TARGET_URL: ${{ matrix.url }}
-          REFERER: ${{ matrix.referer }}
-          # この枚数以上の残数がある場合のみ通知する
-          MIN_REMAINING_COUNT: 2
+          MONTH: ${{ matrix.month }}
+          DAY: ${{ matrix.day }}
+          SHOW: ${{ matrix.show }}
