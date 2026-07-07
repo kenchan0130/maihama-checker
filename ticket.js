@@ -14,6 +14,19 @@ const largeCategoryId = process.env.LARGE_CATEGORY_ID;
 const dateFilter = process.env.DATE ?? "";
 // この枚数以上の残数がある場合のみ通知する（デフォルト 2 枚以上）
 const MIN_REMAINING_COUNT = Number(process.env.MIN_REMAINING_COUNT ?? 2);
+// 例外: 公演名にこの文字列を含む場合だけ別しきい値を使う（例: "第2回公演"）。空なら無効
+const EXCEPTION_MATCH = process.env.EXCEPTION_MATCH ?? "";
+const EXCEPTION_MIN_REMAINING_COUNT = Number(
+  process.env.EXCEPTION_MIN_REMAINING_COUNT ?? MIN_REMAINING_COUNT
+);
+
+// 公演名に応じた通知しきい値を返す
+function thresholdFor(title) {
+  if (EXCEPTION_MATCH && title.includes(EXCEPTION_MATCH)) {
+    return EXCEPTION_MIN_REMAINING_COUNT;
+  }
+  return MIN_REMAINING_COUNT;
+}
 
 const LOOP_LIMIT_MS = 28 * 60 * 1000; // 28 min (GitHub Actions 全体は 30 min timeout)
 const WAIT_MS = 10 * 1000; // 10 秒ごとにチェック
@@ -63,7 +76,10 @@ async function fetchAvailableForDate(middle) {
   const json = await apiGet(url);
   const tickets = json?.data?.tickets ?? [];
   return tickets
-    .filter((t) => (t.remaining_count ?? 0) >= MIN_REMAINING_COUNT)
+    .filter((t) => {
+      const title = t.ticket_content?.title ?? middle.title;
+      return (t.remaining_count ?? 0) >= thresholdFor(title);
+    })
     .map((t) => ({
       key: t.ticket_content?.ticket_id ?? t.ticket_content?.id,
       title: t.ticket_content?.title ?? middle.title,

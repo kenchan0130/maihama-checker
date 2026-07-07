@@ -58,11 +58,13 @@ jobs:
             large_category_id: 17494
             date: "7/8"
             min_remaining_count: 3
-          # dreams 7/8
+          # dreams 7/8（第2回公演だけは2枚でも通知）
           - content_id: 438174
             large_category_id: 17416
             date: "7/8"
             min_remaining_count: 3
+            exception_match: "第2回公演"
+            exception_min_remaining_count: 2
     steps:
       - uses: actions/checkout@v5
       - name: setup Node
@@ -78,3 +80,6 @@ jobs:
           DATE: ${{ matrix.date }}
           # この枚数以上の残数がある場合のみ通知する
           MIN_REMAINING_COUNT: ${{ matrix.min_remaining_count }}
+          # 公演名にこの文字列を含む場合だけ別しきい値を使う（任意）
+          EXCEPTION_MATCH: ${{ matrix.exception_match }}
+          EXCEPTION_MIN_REMAINING_COUNT: ${{ matrix.exception_min_remaining_count }}
