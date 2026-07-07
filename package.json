@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "restaurant": "node restaurant.js",
-    "funderful": "node funderful.js"
+    "funderful": "node funderful.js",
+    "ticket": "node ticket.js"
   },
   "type": "module",
   "license": "PRIVATE",

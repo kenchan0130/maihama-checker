@@ -1,11 +1,13 @@
 name: schedule
 on:
   schedule:
-    # - cron: '*/30 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
   restaurant:
+    # メンテ中のため一時停止
+    if: false
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -44,36 +46,28 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TARGET_URL: ${{ matrix.url }}
           REJECT_LIST: "シャーウッドガーデン・レストラン,ハイピリオン・ラウンジ,イーストサイド･カフェ,れすとらん北齋,エンパイア・グリル,カンナ,センターストリート ･ コーヒーハウス,ドリーマーズ・ラウンジ（ワンス・アポン・ア・ドリームセット限定）"
-  # funderful:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-  #     - name: Cache node modules
-  #       id: npm-cache
-  #       uses: actions/cache@v3
-  #       env:
-  #         cache-name: cache-node-modules
-  #       with:
-  #         path: |
-  #           node_modules
-  #           ~/.cache
-  #           ~/.npm
-  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-  #           ${{ runner.os }}-build-${{ env.cache-name }}-
-  #           ${{ runner.os }}-build-
-  #     - name: install dependencies
-  #       if: ${{ steps.npm-cache.outputs.cache-hit != 'true' }}
-  #       run: npm ci
-  #     - name: run script
-  #       run: npm run funderful
-  #       env:
-  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  #         MONTH: 7
-  #         DAY: 21
-  #         REJECT_LIST: "ビッグバンドビート～ア・スペシャルトリート～"
+  ticket:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - url: 'https://fanclub-funderful.tokyodisneyresort.jp/web_api/v2/ticket/902/16321/440657?type=List&ticket_category_id=94181&ticket_category_type=Middle'
+            referer: 'https://fanclub-funderful.tokyodisneyresort.jp/event/16321/module/ticket/440657?ticketLargeCategoryId=17494'
+          - url: 'https://fanclub-funderful.tokyodisneyresort.jp/web_api/v2/ticket/902/16321/440657?type=List&ticket_category_id=94180&ticket_category_type=Middle'
+            referer: 'https://fanclub-funderful.tokyodisneyresort.jp/event/16321/module/ticket/440657?ticketLargeCategoryId=17494'
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: run script
+        run: npm run ticket
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TARGET_URL: ${{ matrix.url }}
+          REFERER: ${{ matrix.referer }}
+          # この枚数以上の残数がある場合のみ通知する
+          MIN_REMAINING_COUNT: 2
