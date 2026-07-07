@@ -1,19 +1,19 @@
-const API_URL =
-  "https://zw5imfeelcfhupz6ctfpzgnqem0hxvdj.lambda-url.ap-northeast-1.on.aws/";
-// 購入ページのベース URL（{base}/module/ticket/{sourceContentId} でリンク生成）
+const API_BASE =
+  "https://fanclub-funderful.tokyodisneyresort.jp/web_api/v2/ticket/902/16321";
+// 購入ページのベース URL
 const EVENT_BASE =
   process.env.EVENT_BASE ??
   "https://fanclub-funderful.tokyodisneyresort.jp/event/16321";
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
-const month = process.env.MONTH;
-// DAY は任意。未指定ならその月の全日をチェックする
-const day = process.env.DAY;
-// SHOW は公演コード(DTG/DTF/MMW など) か公演名の一部。カンマ区切りで複数可
-const showFilter = (process.env.SHOW ?? "")
-  .split(",")
-  .map((v) => v.trim())
-  .filter((v) => v.length !== 0);
+// 公演コンテンツ ID（例: DTF=438174 / DTG=440657）
+const contentId = process.env.CONTENT_ID;
+// 大カテゴリ ID（例: DTF=17416 / DTG=17494）。日付一覧の取得に使う
+const largeCategoryId = process.env.LARGE_CATEGORY_ID;
+// 日付の絞り込み。中カテゴリの title（例: "7/8"）の部分一致。空なら全日
+const dateFilter = process.env.DATE ?? "";
+// この枚数以上の残数がある場合のみ通知する（デフォルト 2 枚以上）
+const MIN_REMAINING_COUNT = Number(process.env.MIN_REMAINING_COUNT ?? 2);
 
 const LOOP_LIMIT_MS = 28 * 60 * 1000; // 28 min (GitHub Actions 全体は 30 min timeout)
 const WAIT_MS = 10 * 1000; // 10 秒ごとにチェック
@@ -21,83 +21,74 @@ const WAIT_MS = 10 * 1000; // 10 秒ごとにチェック
 if (!slackWebhookUrl) {
   throw new Error("Please set SLACK_WEBHOOK_URL environment variable");
 }
-if (!month) {
-  throw new Error("Please set MONTH environment variable");
+if (!contentId) {
+  throw new Error("Please set CONTENT_ID environment variable");
+}
+if (!largeCategoryId) {
+  throw new Error("Please set LARGE_CATEGORY_ID environment variable");
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function matchesShowFilter(showCode, fullShowName) {
-  if (showFilter.length === 0) return true;
-  return showFilter.some(
-    (f) =>
-      showCode === f ||
-      showCode.toLowerCase() === f.toLowerCase() ||
-      fullShowName.includes(f)
-  );
+function listHeaders() {
+  return {
+    accept: "application/json",
+    "app-type": "Event",
+    language: "jpn",
+    referer: `${EVENT_BASE}/module/ticket/${contentId}?ticketLargeCategoryId=${largeCategoryId}`,
+  };
 }
 
-async function fetchMasterData() {
-  const response = await fetch(`${API_URL}?month=${month}`, {
-    headers: {
-      Referer: "https://main.d17i4dgeb1exbe.amplifyapp.com/",
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
-    },
-  });
-
+async function apiGet(url) {
+  const response = await fetch(url, { headers: listHeaders() });
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-
   return response.json();
 }
 
-// 対象公演の available な performance を全て返す
-function collectAvailable(masterData) {
+// 大カテゴリから日付（中カテゴリ）一覧を取得し、DATE で絞り込む
+async function fetchTargetDates() {
+  const url = `${API_BASE}/${contentId}?type=List&ticket_category_id=${largeCategoryId}&ticket_category_type=Large`;
+  const json = await apiGet(url);
+  const middles = json?.data?.ticket_middle_categories ?? [];
+  return middles
+    .filter((c) => !dateFilter || (c.title ?? "").includes(dateFilter))
+    .map((c) => ({ id: c.ticket_middle_category_id, title: c.title }));
+}
+
+// 指定した日付（中カテゴリ）の公演のうち、しきい値以上の残数があるものを返す
+async function fetchAvailableForDate(middle) {
+  const url = `${API_BASE}/${contentId}?type=List&ticket_category_id=${middle.id}&ticket_category_type=Middle`;
+  const json = await apiGet(url);
+  const tickets = json?.data?.tickets ?? [];
+  return tickets
+    .filter((t) => (t.remaining_count ?? 0) >= MIN_REMAINING_COUNT)
+    .map((t) => ({
+      key: t.ticket_content?.ticket_id ?? t.ticket_content?.id,
+      title: t.ticket_content?.title ?? middle.title,
+      remainingCount: t.remaining_count,
+    }));
+}
+
+async function collectAvailable() {
+  const dates = await fetchTargetDates();
   const results = [];
-  // DAY 指定があればその日だけ、無ければ全日
-  const days = day ? [day.toString()] : Object.keys(masterData ?? {});
-
-  for (const dayStr of days) {
-    const dayData = masterData?.[dayStr];
-    if (!dayData) continue;
-
-    for (const showCode of Object.keys(dayData)) {
-      const show = dayData[showCode];
-      const fullShowName = show.fullShowName ?? showCode;
-      if (!matchesShowFilter(showCode, fullShowName)) continue;
-
-      for (const perf of show.performances ?? []) {
-        if (perf.status !== "available") continue;
-        results.push({
-          key: `${dayStr}-${showCode}-${perf.round}`,
-          day: dayStr,
-          showCode,
-          fullShowName,
-          round: perf.round,
-          sourceContentId: perf.sourceContentId,
-        });
-      }
-    }
+  for (const middle of dates) {
+    const available = await fetchAvailableForDate(middle);
+    results.push(...available);
   }
-
   return results;
 }
 
 async function sendSlackNotification(available) {
+  const url = `${EVENT_BASE}/module/ticket/${contentId}?ticketLargeCategoryId=${largeCategoryId}`;
   const lines = available
-    .map((a) => {
-      const label = `${month}/${a.day} ${a.fullShowName} 第${a.round}回公演`;
-      const url = a.sourceContentId
-        ? `${EVENT_BASE}/module/ticket/${a.sourceContentId}`
-        : EVENT_BASE;
-      return `• <${url}|${label}>`;
-    })
+    .map((t) => `• ${t.title}（残り ${t.remainingCount}）`)
     .join("\n");
 
   const message = {
-    text: `チケットに空きが見つかりました！\n\n${lines}`,
+    text: `チケットに空きが見つかりました！\n\n${lines}\n\n<${url}|チケットページを開く>`,
   };
 
   const response = await fetch(slackWebhookUrl, {
@@ -120,9 +111,9 @@ async function runLoop() {
   const notified = new Set();
 
   console.log(
-    `Checking month=${month}${day ? ` day=${day}` : " (all days)"}${
-      showFilter.length ? ` show=${showFilter.join(",")}` : " (all shows)"
-    }`
+    `Checking contentId=${contentId} large=${largeCategoryId}${
+      dateFilter ? ` date=${dateFilter}` : " (all dates)"
+    } threshold>=${MIN_REMAINING_COUNT}`
   );
 
   while (Date.now() - startTime < LOOP_LIMIT_MS) {
@@ -131,8 +122,7 @@ async function runLoop() {
     console.log(`\n--- Loop ${loopCount} at ${currentTime} ---`);
 
     try {
-      const data = await fetchMasterData();
-      const available = collectAvailable(data.masterData);
+      const available = await collectAvailable();
 
       if (available.length === 0) {
         console.log("No available performances");

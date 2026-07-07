@@ -54,13 +54,15 @@ jobs:
       matrix:
         include:
           # ダンス・ザ・グローブ！ 7/8
-          - month: 7
-            day: 8
-            show: DTG
+          - content_id: 440657
+            large_category_id: 17494
+            date: '7/8'
+            min_remaining_count: 2
           # ドリームス・テイク・フライト（7月の全日をチェック）
-          - month: 7
-            day: ''
-            show: DTF
+          - content_id: 438174
+            large_category_id: 17416
+            date: ''
+            min_remaining_count: 2
     steps:
       - uses: actions/checkout@v5
       - name: setup Node
@@ -71,6 +73,8 @@ jobs:
         run: npm run ticket
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          MONTH: ${{ matrix.month }}
-          DAY: ${{ matrix.day }}
-          SHOW: ${{ matrix.show }}
+          CONTENT_ID: ${{ matrix.content_id }}
+          LARGE_CATEGORY_ID: ${{ matrix.large_category_id }}
+          DATE: ${{ matrix.date }}
+          # この枚数以上の残数がある場合のみ通知する
+          MIN_REMAINING_COUNT: ${{ matrix.min_remaining_count }}
