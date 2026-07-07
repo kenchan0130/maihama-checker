@@ -17,14 +17,14 @@ jobs:
           - 'https://reserve.tokyodisneyresort.jp/sp/restaurant/list/?useDate=20251001&mealDivInform=3&adultNum=2&childNum=1&childAgeInform=03%7C&restaurantTypeInform=&restaurantNameCd=RCPR0&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=&beforeUrl=&wayBack='
           # - 'https://reserve.tokyodisneyresort.jp/sp/showrestaurant/list/?useDate=20250721&adultNum=2&childNum=1&childAgeInform=03%7C&parkDiv=4&restaurantNameCd=&wheelchairCount=0&stretcherCount=0&showWay=&reservationStatus=1&wayBack='
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Cache node modules
         id: npm-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -58,9 +58,9 @@ jobs:
           - url: 'https://fanclub-funderful.tokyodisneyresort.jp/web_api/v2/ticket/902/16321/440657?type=List&ticket_category_id=94180&ticket_category_type=Middle'
             referer: 'https://fanclub-funderful.tokyodisneyresort.jp/event/16321/module/ticket/440657?ticketLargeCategoryId=17494'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
       - name: run script
